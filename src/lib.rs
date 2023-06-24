@@ -1,14 +1,17 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use std::hash::Hash;
+// use async_trait::async_trait;
+
+#[derive(Debug)]
+pub struct KVStoreError;
+
+pub trait KVStore<K, V>
+where
+    K: Eq + Hash,
+{
+    fn put(&mut self, key: K, value: V) -> Result<(), KVStoreError>;
+    fn get(&self, key: &K) -> Result<Option<&V>, KVStoreError>;
+    fn delete(&mut self, key: &K) -> Result<(), KVStoreError>;
+    fn exists(&self, key: &K) -> Result<bool, KVStoreError>;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod mem_kv;
