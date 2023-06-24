@@ -1,21 +1,22 @@
 use std::collections::HashMap;
+use std::error::Error;
 use std::hash::Hash;
 use std::marker::Send;
+use tokio::sync::RwLock;
 
 use async_trait::async_trait;
 
 use crate::KVStore;
-use crate::KVStoreError;
 
 #[derive(Debug)]
 pub struct MemKVStore<K, V> {
-    map: HashMap<K, V>,
+    map: RwLock<HashMap<K, V>>,
 }
 
 impl<K, V> MemKVStore<K, V> {
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map: RwLock::new(HashMap::new()),
         }
     }
 }
@@ -24,21 +25,40 @@ impl<K, V> MemKVStore<K, V> {
 impl<K, V> KVStore<K, V> for MemKVStore<K, V>
 where
     K: Eq + Hash + Send + Sync,
-    V: Send + Sync,
+    V: Clone + Send + Sync,
 {
-    async fn put(&mut self, key: K, value: V) -> Result<(), KVStoreError> {
-        self.map.insert(key, value);
-        Ok(())
+    async fn put(&mut self, key: K, value: V) -> Result<(), Box<dyn Error>> {
+        match self.map.try_write() {
+            Ok(mut m) => {
+                m.insert(key, value);
+                Ok(())
+            }
+            Err(e) => Err(Box::new(e)),
+        }
     }
-    async fn get(&self, key: &K) -> Result<Option<&V>, KVStoreError> {
-        let v = self.map.get(key);
-        Ok(v)
+    async fn get(&self, key: &K) -> Result<Option<V>, Box<dyn Error>> {
+        match self.map.try_read() {
+            Ok(m) => {
+                let value = m.get(key);
+                let copy = value.cloned();
+                Ok(copy)
+            }
+            Err(e) => Err(Box::new(e)),
+        }
     }
-    async fn exists(&self, key: &K) -> Result<bool, KVStoreError> {
-        Ok(self.map.contains_key(key))
+    async fn exists(&self, key: &K) -> Result<bool, Box<dyn Error>> {
+        match self.map.try_read() {
+            Ok(m) => Ok(m.contains_key(key)),
+            Err(e) => Err(Box::new(e)),
+        }
     }
-    async fn delete(&mut self, key: &K) -> Result<(), KVStoreError> {
-        let _value_at_key: Option<V> = self.map.remove(key);
-        Ok(())
+    async fn delete(&mut self, key: &K) -> Result<(), Box<dyn Error>> {
+        match self.map.try_write() {
+            Ok(mut m) => {
+                m.remove(key);
+                Ok(())
+            }
+            Err(e) => Err(Box::new(e)),
+        }
     }
 }

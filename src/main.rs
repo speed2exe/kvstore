@@ -11,7 +11,7 @@ struct CustomKey {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct CustomValue {
     id: i32,
     name: String,
