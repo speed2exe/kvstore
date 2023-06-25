@@ -90,6 +90,10 @@ async fn main() {
     custom_kvstore_operations(&mut rocksdb_store).await;
 
     // dynamodb store
+    // ~/.aws/credentials
+    // [default]
+    // aws_access_key_id = <your access key>
+    // aws_secret_access_key = <your secret key>
     let aws_dynomodb_client = {
         let region_provider = RegionProviderChain::default_provider().or_else("ap-southeast-1");
         let config = aws_config::from_env().region(region_provider).load().await;
