@@ -26,3 +26,7 @@ impl kvstore::KeyString for CustomKey {
 ```
 
 - custom values need to implement `serde::{Deserialize, Serialize}` trait
+
+## Possible Future improvements
+- use `#![feature(async_fn_in_trait)]`
+- RWLock on `KeyString`
