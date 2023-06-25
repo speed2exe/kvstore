@@ -1,5 +1,3 @@
-use rocksdb::Error as RocksDBError;
-use rocksdb::DB;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::error::Error;
@@ -15,11 +13,8 @@ pub struct RocksDBKVStore {
     db: rocksdb::DB,
 }
 impl RocksDBKVStore {
-    pub fn new(path: &str) -> Result<Self, RocksDBError> {
-        match DB::open_default(path) {
-            Ok(db) => Ok(Self { db }),
-            Err(e) => Err(e),
-        }
+    pub fn new(db: rocksdb::DB) -> Self {
+        Self { db }
     }
 }
 

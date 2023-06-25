@@ -61,12 +61,12 @@ async fn custom_kvstore_operations(kvstore: &mut impl KVStore) {
 
 #[tokio::main]
 async fn main() {
-    // concrete type
+    // basic memory store
     let mut mem_store = MemKVStore::new();
     custom_kvstore_operations(&mut mem_store).await;
 
-    let mut rocksdb_store = RocksDBKVStore::new("rocksdb").unwrap();
+    // rocksdb store
+    let rocksdb = rocksdb::DB::open_default("rocksdb").unwrap();
+    let mut rocksdb_store = RocksDBKVStore::new(rocksdb);
     custom_kvstore_operations(&mut rocksdb_store).await;
-
-    println!("store: {:?}", mem_store);
 }
