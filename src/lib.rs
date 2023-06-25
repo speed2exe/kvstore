@@ -28,5 +28,6 @@ pub trait KeyString {
     fn as_str(&self) -> String;
 }
 
+pub mod dynamodb_kv;
 pub mod mem_kv;
 pub mod rocksdb_kv;
