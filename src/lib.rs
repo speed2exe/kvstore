@@ -1,15 +1,31 @@
+use std::error::Error;
+
 use async_trait::async_trait;
-use std::{error::Error, hash::Hash};
+use serde::{de::DeserializeOwned, Serialize};
 
 #[async_trait]
-pub trait KVStore<K, V>
-where
-    K: Eq + Hash,
-{
-    async fn put(&mut self, key: K, value: V) -> Result<(), Box<dyn Error>>;
-    async fn get(&self, key: &K) -> Result<Option<V>, Box<dyn Error>>;
-    async fn delete(&mut self, key: &K) -> Result<(), Box<dyn Error>>;
-    async fn exists(&self, key: &K) -> Result<bool, Box<dyn Error>>;
+pub trait KVStore {
+    async fn put<K, V>(&mut self, key: K, value: V) -> Result<(), Box<dyn Error>>
+    where
+        K: KeyString + Send,
+        V: Serialize + Send;
+
+    async fn get<K, V>(&self, key: &K) -> Result<Option<V>, Box<dyn Error>>
+    where
+        K: KeyString + Sync,
+        V: DeserializeOwned;
+
+    async fn exists<K>(&self, key: &K) -> Result<bool, Box<dyn Error>>
+    where
+        K: KeyString + Sync;
+
+    async fn delete<K>(&mut self, key: &K) -> Result<(), Box<dyn Error>>
+    where
+        K: KeyString + Sync;
+}
+
+pub trait KeyString {
+    fn as_str(&self) -> String;
 }
 
 pub mod mem_kv;

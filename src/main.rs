@@ -1,17 +1,22 @@
-// import from lib.rs
-use core::hash::Hash;
-use std::{cmp::Eq, collections::HashMap};
+use std::collections::HashMap;
 
 use kvstore::{mem_kv::MemKVStore, KVStore};
+use serde::{Deserialize, Serialize};
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Debug)]
 struct CustomKey {
     id: i32,
     name: String,
 }
 
+impl kvstore::KeyString for CustomKey {
+    fn as_str(&self) -> String {
+        format!("{}-{}", self.id, self.name)
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize)]
 struct CustomValue {
     id: i32,
     name: String,
@@ -19,7 +24,7 @@ struct CustomValue {
     settings: HashMap<String, String>,
 }
 
-async fn custom_kvstore_operations(kvstore: &mut impl KVStore<CustomKey, CustomValue>) {
+async fn custom_kvstore_operations(kvstore: &mut impl KVStore) {
     let key = CustomKey {
         id: 1,
         name: "test".to_string(),
@@ -39,15 +44,15 @@ async fn custom_kvstore_operations(kvstore: &mut impl KVStore<CustomKey, CustomV
         id: 1,
         name: "test".to_string(),
     };
-    let value2 = kvstore.get(&key2).await.unwrap();
+    let value2: Option<CustomValue> = kvstore.get(&key2).await.unwrap();
     println!("value2: {:?}", value2);
 
     let is_exists = kvstore.exists(&key2).await.unwrap();
     println!("is_exists: {:?}", is_exists);
 
-    // // should not exist after deletion
+    // // // should not exist after deletion
     kvstore.delete(&key2).await.unwrap();
-    let value3 = kvstore.get(&key2).await.unwrap();
+    let value3: Option<CustomValue> = kvstore.get(&key2).await.unwrap();
     println!("value3: {:?}", value3);
 
     let is_exists = kvstore.exists(&key2).await.unwrap();
@@ -57,7 +62,7 @@ async fn custom_kvstore_operations(kvstore: &mut impl KVStore<CustomKey, CustomV
 #[tokio::main]
 async fn main() {
     // concrete type
-    let mut store = MemKVStore::<CustomKey, CustomValue>::new();
+    let mut store = MemKVStore::new();
 
     // pass in as trait
     custom_kvstore_operations(&mut store).await;
