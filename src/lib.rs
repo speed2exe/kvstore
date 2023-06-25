@@ -29,3 +29,4 @@ pub trait KeyString {
 }
 
 pub mod mem_kv;
+pub mod rocksdb_kv;

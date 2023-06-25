@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use kvstore::{mem_kv::MemKVStore, KVStore};
+use kvstore::{mem_kv::MemKVStore, rocksdb_kv::RocksDBKVStore, KVStore};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
@@ -50,7 +50,7 @@ async fn custom_kvstore_operations(kvstore: &mut impl KVStore) {
     let is_exists = kvstore.exists(&key2).await.unwrap();
     println!("is_exists: {:?}", is_exists);
 
-    // // // should not exist after deletion
+    // should not exist after deletion
     kvstore.delete(&key2).await.unwrap();
     let value3: Option<CustomValue> = kvstore.get(&key2).await.unwrap();
     println!("value3: {:?}", value3);
@@ -62,10 +62,11 @@ async fn custom_kvstore_operations(kvstore: &mut impl KVStore) {
 #[tokio::main]
 async fn main() {
     // concrete type
-    let mut store = MemKVStore::new();
+    let mut mem_store = MemKVStore::new();
+    custom_kvstore_operations(&mut mem_store).await;
 
-    // pass in as trait
-    custom_kvstore_operations(&mut store).await;
+    let mut rocksdb_store = RocksDBKVStore::new("rocksdb").unwrap();
+    custom_kvstore_operations(&mut rocksdb_store).await;
 
-    println!("store: {:?}", store);
+    println!("store: {:?}", mem_store);
 }
